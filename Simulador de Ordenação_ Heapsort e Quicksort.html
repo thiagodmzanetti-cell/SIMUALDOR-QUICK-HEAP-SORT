@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simulador de Ordenação: Heapsort e Quicksort</title>
+<style>
+:root{box-sizing:border-box;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);
+--bg:#f7f7f5;--card:#fff;--tx:#1d1d1b;--mu:#6b6b66;--bd:#dcdcd6;--bar:#8aa4c8;--i:#2f6fd6;--j:#e08a00;--sw:#d64545;--ok:#2e9e5b;--pv:#7a4fd0;--dim:#d5d8de;--ac:#2f6fd6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#16171a;--card:#202226;--tx:#ececea;--mu:#9a9a94;--bd:#33363c;--bar:#5d7aa3;--i:#5b9bff;--j:#ffb02e;--sw:#ff6b6b;--ok:#4cc582;--pv:#a98aff;--dim:#3a3d44;--ac:#5b9bff}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#16171a;--card:#202226;--tx:#ececea;--mu:#9a9a94;--bd:#33363c;--bar:#5d7aa3;--i:#5b9bff;--j:#ffb02e;--sw:#ff6b6b;--ok:#4cc582;--pv:#a98aff;--dim:#3a3d44;--ac:#5b9bff}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:920px;margin:0 auto;padding:16px}
+h1{font-size:1.4rem;margin:.2em 0}
+.sub{color:var(--mu);margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:14px}
+.tabs{display:flex;gap:8px;margin-bottom:12px}
+.tabs button{flex:1}
+button,input,select{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px 12px}
+button{cursor:pointer}
+button.on,button.main{background:var(--ac);border-color:var(--ac);color:#fff}
+button:disabled{opacity:.45;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.row input[type=text]{flex:1;min-width:180px}
+#chart{position:relative;height:230px;display:flex;align-items:flex-end;gap:4px;padding:0 2px;border-bottom:1px solid var(--bd)}
+.b{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%}
+.b i{display:block;width:100%;background:var(--bar);border-radius:4px 4px 0 0;transition:height .2s,background .2s}
+.b span{font-size:.75rem;line-height:1.2;margin-bottom:2px}
+.b.i i{background:var(--i)}.b.j i{background:var(--j)}.b.sw i{background:var(--sw)}.b.a i{background:var(--sw)}.b.cmp i{background:var(--j)}.b.ok i{background:var(--ok)}.b.dim i{background:var(--dim)}.b.dim span{opacity:.4}
+#pv{position:absolute;left:0;right:0;border-top:2px dashed var(--pv);display:none;pointer-events:none}
+#pv em{position:absolute;right:0;top:-1.4em;font-size:.75rem;font-style:normal;color:var(--pv)}
+#idx{display:flex;gap:4px;padding:2px 2px 0;color:var(--mu);font-size:.7rem}
+#idx div{flex:1;text-align:center}
+#msg{min-height:3.2em;margin:10px 0 0;font-weight:500}
+.stats{display:flex;gap:18px;flex-wrap:wrap;color:var(--mu);margin-top:6px}
+.stats b{color:var(--tx)}
+.leg{display:flex;gap:12px;flex-wrap:wrap;font-size:.8rem;color:var(--mu);margin-top:8px}
+.leg s{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;text-decoration:none}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+td,th{border-bottom:1px solid var(--bd);padding:6px 8px;text-align:left}
+.sc{overflow-x:auto}
+.how{color:var(--mu);font-size:.9rem;margin:0}
+</style>
+</head>
+<body>
+<main>
+<h1>Simulador de Ordenação Interna</h1>
+<p class="sub">Veja o Heapsort e o Quicksort funcionando passo a passo.</p>
+
+<div class="card">
+ <div class="tabs">
+  <button id="tH" class="on">Heapsort</button>
+  <button id="tQ">Quicksort</button>
+ </div>
+ <div class="row">
+  <input type="text" id="inp" value="101, 115, 30, 63, 47, 20" aria-label="Vetor separado por vírgulas">
+  <button id="ld">Carregar</button>
+  <button id="rnd">Aleatório</button>
+  <button id="srt">Já ordenado</button>
+ </div>
+ <div class="row">
+  <button id="pr">◀ Anterior</button>
+  <button id="pl" class="main">▶ Play</button>
+  <button id="nx">Próximo ▶</button>
+  <button id="rs">↺ Reiniciar</button>
+  <label>Velocidade <input type="range" id="sp" min="1" max="10" value="5"></label>
+ </div>
+ <div id="chart" role="img" aria-label="Barras do vetor"><div id="pv"><em id="pvl"></em></div></div>
+ <div id="idx"></div>
+ <div class="leg" id="leg"></div>
+ <p id="msg"></p>
+ <div class="stats"><span>Passo <b id="st">0</b>/<b id="tt">0</b></span><span>Comparações: <b id="cc">0</b></span><span>Trocas: <b id="ss">0</b></span></div>
+</div>
+
+<div class="card">
+ <p class="how" id="how"></p>
+</div>
+
+<div class="card sc">
+ <table>
+  <tr><th></th><th>Heapsort</th><th>Quicksort</th></tr>
+  <tr><td>Melhor caso</td><td>Θ(n lg n)</td><td>Θ(n lg n)</td></tr>
+  <tr><td>Caso médio</td><td>Θ(n lg n)</td><td>Θ(n lg n)</td></tr>
+  <tr><td>Pior caso</td><td>Θ(n lg n)</td><td>Θ(n²)</td></tr>
+  <tr><td>Espaço extra</td><td>Constante (in-place)</td><td>Pilha de recursão</td></tr>
+  <tr><td>Estável</td><td>Não</td><td>Não</td></tr>
+ </table>
+</div>
+</main>
+
+<script>
+var algo='H',A=[101,115,30,63,47,20],F=[],k=0,timer=null;
+var $=function(id){return document.getElementById(id)};
+
+function heap(A){
+ var a=[null].concat(A),n=A.length,F=[],c=0,s=0,dn=[];
+ function f(msg,m){var mm={};dn.forEach(function(i){mm[i]='ok'});for(var x in m)mm[x]=m[x];F.push({a:a.slice(1),m:mm,msg:msg,c:c,s:s})}
+ function sw(i,j){var t=a[i];a[i]=a[j];a[j]=t;s++}
+ f('Vetor inicial. Fase 1: construir o heap invertido inserindo um elemento por vez.',{});
+ for(var t=2;t<=n;t++){
+  f('Inserir a['+t+'] = '+a[t]+' no heap de tamanho '+t+'. Ele sobe enquanto for maior que o pai.',{[t-1]:'a'});
+  for(var i=t;i>1;i=i>>1){
+   var p=i>>1;c++;
+   if(a[i]>a[p]){f(a[i]+' > '+a[p]+' (pai): trocar.',{[i-1]:'cmp',[p-1]:'cmp'});sw(i,p);f('Trocou. O elemento subiu para a posição '+p+'.',{[p-1]:'sw',[i-1]:'sw'})}
+   else{f(a[i]+' ≤ '+a[p]+' (pai): o elemento já está no lugar.',{[i-1]:'cmp',[p-1]:'cmp'});break}
+  }
+ }
+ f('Heap pronto: o maior elemento ('+a[1]+') está na raiz. Fase 2: ordenar.',{0:'a'});
+ var tam=n;
+ while(tam>1){
+  f('swap(1, '+tam+'): a raiz '+a[1]+' vai para a posição '+tam+'.',{0:'sw',[tam-1]:'sw'});
+  sw(1,tam);dn.push(tam-1);tam--;
+  f('Posição '+(tam+1)+' fica ordenada. Reconstruir o heap com tamanho '+tam+'.',{0:'a'});
+  var i=1;
+  while(i<=(tam>>1)){
+   var fl=(2*i==tam||a[2*i]>a[2*i+1])?2*i:2*i+1;
+   if(2*i!=tam)c++;
+   c++;
+   if(a[i]<a[fl]){f(a[i]+' < '+a[fl]+' (maior filho): trocar e descer.',{[i-1]:'cmp',[fl-1]:'cmp'});sw(i,fl);f('Desceu para a posição '+fl+'.',{[i-1]:'sw',[fl-1]:'sw'});i=fl}
+   else{f(a[i]+' ≥ '+a[fl]+' (maior filho): heap restaurado.',{[i-1]:'cmp',[fl-1]:'cmp'});break}
+  }
+ }
+ dn.push(0);f('Vetor ordenado.',{});
+ return F;
+}
+
+function quick(A){
+ var a=A.slice(),F=[],c=0,s=0;
+ function f(msg,m,r,pv){F.push({a:a.slice(),m:m,msg:msg,c:c,s:s,r:r,pv:pv})}
+ function Q(e,d){
+  var i=e,j=d,pm=(e+d)>>1,p=a[pm],R=[e,d];
+  f('quicksort('+e+', '+d+'): pivô = a['+pm+'] = '+p+'. Procurar a partir da esquerda (i) e da direita (j).',{[pm]:'ok'},R,p);
+  while(i<=j){
+   while(true){c++;var ok=a[i]<p;f('a['+i+'] = '+a[i]+' < '+p+'? '+(ok?'Sim, i avança.':'Não, i para.'),{[i]:'i',[j]:'j'},R,p);if(ok)i++;else break}
+   while(true){c++;var ok2=a[j]>p;f('a['+j+'] = '+a[j]+' > '+p+'? '+(ok2?'Sim, j recua.':'Não, j para.'),{[i]:'i',[j]:'j'},R,p);if(ok2)j--;else break}
+   if(i<=j){
+    f('i ≤ j ('+i+' ≤ '+j+'): trocar '+a[i]+' com '+a[j]+'.',{[i]:'sw',[j]:'sw'},R,p);
+    var t=a[i];a[i]=a[j];a[j]=t;s++;
+    f('Trocou. i avança e j recua.',{[i]:'sw',[j]:'sw'},R,p);i++;j--;
+   }
+  }
+  f('Ponteiros se cruzaram (j = '+j+', i = '+i+'). Esquerda: '+e+'…'+j+'. Direita: '+i+'…'+d+'.',{},R,p);
+  if(e<j)Q(e,j);
+  if(i<d)Q(i,d);
+ }
+ f('Vetor inicial. O pivô é o elemento do meio de cada intervalo.',{},null,null);
+ Q(0,a.length-1);
+ var all={};a.forEach(function(_,i){all[i]='ok'});
+ f('Vetor ordenado.',all,null,null);
+ return F;
+}
+
+function render(){
+ var fr=F[k],mx=Math.max.apply(null,fr.a),ch=$('chart'),h='';
+ fr.a.forEach(function(v,i){
+  var cl=fr.m[i]||'';
+  if(fr.r&&(i<fr.r[0]||i>fr.r[1]))cl='dim';
+  h+='<div class="b '+cl+'"><span>'+v+'</span><i style="height:'+Math.max(4,v/mx*180)+'px"></i></div>';
+ });
+ var pv=$('pv');ch.innerHTML=h;ch.appendChild(pv);
+ if(fr.pv!=null){pv.style.display='block';pv.style.bottom=(fr.pv/mx*180+0)+'px';$('pvl').textContent='pivô '+fr.pv}else pv.style.display='none';
+ $('msg').textContent=fr.msg;$('st').textContent=k+1;$('tt').textContent=F.length;
+ $('cc').textContent=fr.c;$('ss').textContent=fr.s;
+ $('pr').disabled=k==0;$('nx').disabled=k>=F.length-1;
+}
+function idx(){var h='';A.forEach(function(_,i){h+='<div>'+(algo=='H'?i+1:i)+'</div>'});$('idx').innerHTML=h}
+function stop(){clearInterval(timer);timer=null;$('pl').textContent='▶ Play'}
+function load(arr){
+ stop();A=arr;F=algo=='H'?heap(A):quick(A);k=0;idx();render();
+ $('inp').value=A.join(', ');
+ $('leg').innerHTML=algo=='H'
+  ?'<span><s style="background:var(--sw)"></s>elemento que sobe/desce</span><span><s style="background:var(--j)"></s>comparando</span><span><s style="background:var(--ok)"></s>já ordenado</span><span>Índices a partir de 1</span>'
+  :'<span><s style="background:var(--i)"></s>i</span><span><s style="background:var(--j)"></s>j</span><span><s style="background:var(--sw)"></s>troca</span><span><s style="background:var(--pv)"></s>linha do pivô</span><span><s style="background:var(--dim)"></s>fora do intervalo atual</span>';
+ $('how').textContent=algo=='H'
+  ?'Heapsort: (1) construa um heap invertido (cada pai ≥ filhos) inserindo os elementos um a um, com troca subindo; (2) troque a raiz com o último elemento do heap, diminua o heap e reconstrua descendo o novo elemento da raiz. Repita até sobrar um elemento.'
+  :'Quicksort: escolha um pivô (aqui, o elemento do meio), avance i enquanto a[i] < pivô, recue j enquanto a[j] > pivô e troque quando i ≤ j. Depois ordene recursivamente as partes esquerda e direita.';
+}
+function parse(){
+ var v=$('inp').value.split(/[\s,;]+/).filter(Boolean).map(Number);
+ if(v.length<2||v.length>24||v.some(function(x){return !isFinite(x)||x<0||x>999})){$('msg').textContent='Digite de 2 a 24 números entre 0 e 999, separados por vírgula.';return null}
+ return v;
+}
+function tick(){if(k<F.length-1){k++;render()}else stop()}
+function play(){
+ if(timer){stop();return}
+ if(k>=F.length-1)k=0;
+ $('pl').textContent='⏸ Pausar';render();
+ timer=setInterval(tick,Math.round(1100-$('sp').value*100));
+}
+function tab(a){algo=a;$('tH').className=a=='H'?'on':'';$('tQ').className=a=='Q'?'on':'';load(A)}
+$('tH').onclick=function(){tab('H')};
+$('tQ').onclick=function(){tab('Q')};
+$('ld').onclick=function(){var v=parse();if(v)load(v)};
+$('rnd').onclick=function(){var v=[];for(var i=0;i<12;i++)v.push(1+Math.floor(Math.random()*99));load(v)};
+$('srt').onclick=function(){var v=[];for(var i=1;i<=10;i++)v.push(i*8);load(v)};
+$('pl').onclick=play;
+$('nx').onclick=function(){stop();if(k<F.length-1){k++;render()}};
+$('pr').onclick=function(){stop();if(k>0){k--;render()}};
+$('rs').onclick=function(){stop();k=0;render()};
+$('sp').oninput=function(){if(timer){clearInterval(timer);timer=setInterval(tick,Math.round(1100-$('sp').value*100))}};
+load(A);
+</script>
+</body>
+</html>
